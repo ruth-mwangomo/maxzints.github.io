@@ -154,7 +154,7 @@ function updateChart(rawData) {
     const simulation = d3.forceSimulation(filteredAndPivotedData)
         .force('x', d3.forceX(d => d.targetX).strength(0.15))
         .force('y', d3.forceY(d => d.targetY).strength(0.15))
-        .force('collide', d3.forceCollide(radius * 2 + 0.25)); 
+        .force('collide', d3.forceCollide(radius * 2 + 0.25)).on('tick', ticked); 
 
     simulation.stop();
     for (let i = 0; i < 150; ++i) { 
