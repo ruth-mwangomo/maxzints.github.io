@@ -258,9 +258,11 @@ function updateChart(rawData) {
 
         for (let i = 0; i < nodesToDraw.length; i++) {
             const d = nodesToDraw[i];
-            const isActive = (typeof mapInc === 'function' ? activeIncomes.has(mapInc(d.incCode)) : true) &&
-                (typeof mapEdu === 'function' ? activeEdus.has(mapEdu(d.eduCode)) : true);
-            // Highlighting Logic
+            const isPartyActive = activeParties.has(d.partyName);
+            const isIncActive = (typeof mapInc === 'function' ? activeIncomes.has(mapInc(d.incCode)) : true);
+            const isEduActive = (typeof mapEdu === 'function' ? activeEdus.has(mapEdu(d.eduCode)) : true);
+            
+            const isActive = isPartyActive && isIncActive && isEduActive;  // Highlighting Logic
             let currentRadius = radius;
             let currentAlpha = 0.9;
             let strokeColor = null;

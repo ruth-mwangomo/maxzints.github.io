@@ -38,29 +38,22 @@ function renderCircle(containerSelector = '#chart-circle') {
     return d3.csv('ScrubbedRLSDataFile.csv'); // Fallback to async load
   };
 
-  loadData().then(data => {
-    // --- END FIX ---
-
-    // 1. Apply All Filters (Party + Income/Edu Filters)
+loadData().then(data => {
+    // 1. **REWORKED:** USE ALL RAW DATA for the base calculation
+    const allRawData = data;
+    
+    // 2. Define Filters
     const partyDomains = ["Democrat", "Republican", "Independent", "Other"];
     const activeParties = typeof window !== 'undefined' && window.activeParties ? window.activeParties : new Set(partyDomains);
-    
-    // Retrieve global filter state
     const allIncomes = typeof window !== 'undefined' && window.allIncomes ? window.allIncomes : ['$30k - $50k', '$50k - $100k', '$100k - $150k', '$150k+', 'Unknown'];
     const activeIncomes = typeof window !== 'undefined' && window.activeIncomes ? window.activeIncomes : new Set(allIncomes);
-    
+    const allEdusGlobal = typeof window !== 'undefined' && window.allEdus ? window.allEdus : allEdusFallback;
     const activeEdus = typeof window !== 'undefined' && window.activeEdus ? window.activeEdus : new Set(allEdusGlobal);
     
-    const filteredData = data.filter(d => 
-        activeParties.has(mapParty(d.PARTY)) &&
-        activeIncomes.has(mapInc(d.INC_SDT1)) &&
-        activeEdus.has(mapEdu(d.EDUCREC))
-    );
+    // 3. **REWORKED:** Build nested counts on ALL data
+    const nested = d3.rollups(allRawData, v => v.length, d => mapParty(d.PARTY), d => mapEdu(d.EDUCREC));
 
-    // build nested counts: party -> edu -> count
-    const nested = d3.rollups(filteredData, v => v.length, d => mapParty(d.PARTY), d => mapEdu(d.EDUCREC));
-
-    // convert to hierarchy format
+    // convert to hierarchy format (REMAINS THE SAME)
     const root = {
       name: 'root', children: nested.map(([party, eduArr]) => ({
         name: party,
