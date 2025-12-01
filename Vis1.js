@@ -232,8 +232,8 @@ function updateChart(rawData) {
 
     // Force simulation 
     const simulation = d3.forceSimulation(nodes)
-        .force('x', d3.forceX(d => d.targetX).strength(0.005))
-        .force('y', d3.forceY(d => d.targetY).strength(0.01))
+        .force('x', d3.forceX(d => d.targetX).strength(0.0075))
+        .force('y', d3.forceY(d => d.targetY).strength(0.015))
         .force('collide', d3.forceCollide(radius * 2))
         .force('repel', d3.forceManyBody().strength(-0.03))
         .alpha(1)
