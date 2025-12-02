@@ -28,7 +28,7 @@ function renderCircle(containerSelector = '#chart-circle') {
     if (typeof window !== 'undefined' && window.rlsData) {
       return Promise.resolve(window.rlsData); // Use already loaded data immediately
     }
-    return d3.csv('ScrubbedRLSDataFile.csv'); // Fallback to async load
+    return d3.csv('RLS_Final.csv'); // Fallback to async load
   };
 
 loadData().then(data => {

@@ -118,7 +118,7 @@ function renderSankey(containerSelector = '#chart-sankey') {
       if (typeof window !== 'undefined' && window.rlsData) {
           return Promise.resolve(window.rlsData); 
       }
-      return d3.csv('ScrubbedRLSDataFile.csv'); 
+      return d3.csv('RLS_Final.csv'); 
   };
     
   loadData().then(data => {

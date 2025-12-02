@@ -7,7 +7,7 @@ const dimensions = {
 const width = dimensions.width - dimensions.margin.left - dimensions.margin.right;
 const height = dimensions.height - dimensions.margin.top - dimensions.margin.bottom;
 const radius = 1.5; // Radius of each mark
-const PARTY_OFFSET_AMOUNT = 0.3; // Controls how far off-center each party is pulled (0.0 to 0.5)
+const PARTY_OFFSET_AMOUNT = 0.25; // Controls how far off-center each party is pulled (0.0 to 0.5)
 
 // Cache processed/pivoted data per question to avoid repeated work
 const processedCache = new Map();
@@ -16,7 +16,7 @@ window.highlightedID = null;
 
 d3.csv("RLS_Final.csv").then(function (rawData) {
 
-    const subsampledData = rawData.filter((d, i) => i % 3 === 0);
+    const subsampledData = rawData.filter((d, i) => i % 5 === 0);
     window.rlsData = subsampledData; // Store the subsampled data globally  
 
     // Call the universal update for initial filter state 
@@ -29,7 +29,6 @@ d3.csv("RLS_Final.csv").then(function (rawData) {
 });
 
 const questionColumns = [
-    { id: "CHNG_A", label: "A growing population of immigrants" },
     { id: "CHNG_B", label: "More women in the workforce" },
     { id: "CHNG_A", label: "A growing population of immigrants" },
     { id: "SCIMPACT", label: "How has science impacted American society" }
@@ -59,10 +58,10 @@ function mapResponseCodeToLabel(code) {
 //Offset each party such that they have their own quadrant of the a grid cell
 function getPartyOffset(partyName) {
     switch (partyName) {
-        case "Republican": return { dx: -PARTY_OFFSET_AMOUNT / 2, dy: -PARTY_OFFSET_AMOUNT };
-        case "Democrat": return { dx: PARTY_OFFSET_AMOUNT / 2, dy: PARTY_OFFSET_AMOUNT };
-        case "Independent": return { dx: PARTY_OFFSET_AMOUNT / 2, dy: -PARTY_OFFSET_AMOUNT };
-        case "Other": return { dx: -PARTY_OFFSET_AMOUNT / 2, dy: PARTY_OFFSET_AMOUNT };
+        case "Republican": return { dx: -PARTY_OFFSET_AMOUNT / 1.5, dy: -PARTY_OFFSET_AMOUNT };
+        case "Democrat": return { dx: PARTY_OFFSET_AMOUNT / 1.5, dy: PARTY_OFFSET_AMOUNT };
+        case "Independent": return { dx: PARTY_OFFSET_AMOUNT / 1.5, dy: -PARTY_OFFSET_AMOUNT };
+        case "Other": return { dx: -PARTY_OFFSET_AMOUNT / 1.5, dy: PARTY_OFFSET_AMOUNT };
         default: return { dx: 0, dy: 0 };
     }
 }
@@ -91,7 +90,7 @@ function processAndPivotData(rawData, xScale, yScale) {
             // Calc center of grid cell for this question column
             const cellCenterX = xScale(responseLabel) + xScale.bandwidth() / 2;
             const cellCenterY = yScale(q.id) + yScale.bandwidth() / 2;
-
+           
             const offsetFactorX = xScale.bandwidth();
             const offsetFactorY = yScale.bandwidth();
 
@@ -233,10 +232,10 @@ function updateChart(rawData) {
 
     // Force simulation 
     const simulation = d3.forceSimulation(nodes)
-        .force('x', d3.forceX(d => d.targetX).strength(0.0075))
-        .force('y', d3.forceY(d => d.targetY).strength(0.015))
+        .force('x', d3.forceX(d => d.targetX).strength(0.015))
+        .force('y', d3.forceY(d => d.targetY).strength(0.03))
         .force('collide', d3.forceCollide(radius * 2))
-        .force('repel', d3.forceManyBody().strength(-0.03))
+        .force('repel', d3.forceManyBody().strength(-0.01))
         .alpha(1)
         .alphaDecay(0.02);
 
