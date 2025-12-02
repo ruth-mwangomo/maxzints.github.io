@@ -76,8 +76,8 @@ loadData().then(data => {
 
     // 4. Opacity Logic
     const isHighlighting = typeof window !== 'undefined' && window.highlightedID !== null;
-    const HIGHLIGHT_GHOST_OPACITY = 0.2; 
-    const FILTER_GHOST_OPACITY = 0.1;
+    const HIGHLIGHT_GHOST_OPACITY = 0.3; 
+    const FILTER_GHOST_OPACITY = 0.3;
     const ACTIVE_OPACITY = 1.0; 
 
     //Check if a slice is active based on Party and Education filters
