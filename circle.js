@@ -103,6 +103,7 @@ loadData().then(data => {
       .attr('d', arc)
       .attr('fill', d => color(d.ancestors().slice(-2)[0].data.name))
       .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
       // Apply Opacity based on  highlighting state
       .style('opacity', d => {
           if (isHighlighting) {
@@ -113,7 +114,8 @@ loadData().then(data => {
               return isSliceActive(d) ? ACTIVE_OPACITY : FILTER_GHOST_OPACITY;
           }
           return ACTIVE_OPACITY; 
-      }) 
+      })
+      .style('transition', 'all 0.3s ease')
       .style('cursor', d => d.depth === 2 ? 'pointer' : 'default') // Indicate interactivity
       
       // Click Handler
@@ -143,13 +145,39 @@ loadData().then(data => {
         window.updateAllCharts();
       })
       
+      .on('mouseover', function(event, d) {
+        if (d.depth === 2) {
+          d3.select(this)
+            .style('filter', 'brightness(1.15)')
+            .attr('stroke-width', 3);
+        }
+      })
+      
       .on('mousemove', (event, d) => {
+        let tooltipText = '';
+        if (d.depth === 1) {
+          // Party level: just show "Party: count"
+          tooltipText = `${d.data.name}: ${d.value}`;
+        } else if (d.depth === 2) {
+          // Education level: show "Party, Education: count"
+          const party = d.parent.data.name;
+          const education = d.data.name;
+          tooltipText = `${party}, ${education}: ${d.value}`;
+        } else {
+          tooltipText = `${d.data.name}${d.value ? ': ' + d.value : ''}`;
+        }
+        
         tooltip.style('display', 'block')
           .style('left', (event.pageX + 10) + 'px')
           .style('top', (event.pageY + 10) + 'px')
-          .text(`${d.data.name}${d.value ? ': ' + d.value : ''}`);
+          .text(tooltipText);
       })
-      .on('mouseleave', () => tooltip.style('display', 'none'));
+      .on('mouseleave', function() {
+        d3.select(this)
+          .style('filter', 'none')
+          .attr('stroke-width', 2);
+        tooltip.style('display', 'none');
+      });
       
     const eduNodes = rootNode.descendants().filter(d => d.depth === 2);
 
@@ -222,11 +250,27 @@ loadData().then(data => {
     labels.raise();
 
 
-    // center label
+    // center label with improved styling
     svg.append('text')
       .attr('text-anchor', 'middle')
-      .style('font-weight', 'bold')
+      .attr('dy', '-0.3em')
+      .style('font-family', "'Playfair Display', serif")
+      .style('font-weight', '700')
+      .style('font-size', '16px')
+      .style('fill', '#1f2937')
+      .style('letter-spacing', '0.3px')
       .text('Education Levels')
+      .raise();
+    
+    // Add subtitle
+    svg.append('text')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '1.2em')
+      .style('font-family', "'Inter', sans-serif")
+      .style('font-weight', '500')
+      .style('font-size', '11px')
+      .style('fill', '#6b7280')
+      .text('by Party')
       .raise();
 
   }).catch(err => {

@@ -13,6 +13,17 @@ function renderSankey(containerSelector = '#chart-sankey') {
   const width = Math.max(500, rect.width * 0.95);
   const height = Math.max(300, rect.height * 0.95);
 
+  // Add title to container
+  container.append('div')
+    .attr('class', 'chart-title')
+    .style('font-family', "'Playfair Display', serif")
+    .style('font-size', '18px')
+    .style('font-weight', '700')
+    .style('color', '#1f2937')
+    .style('text-align', 'center')
+    .style('margin-bottom', '10px')
+    .style('letter-spacing', '0.3px')
+    .text('Party Affiliation → Income Distribution');
   
   const svg = container.append('svg').attr('width', width).attr('height', height);
 
@@ -184,6 +195,14 @@ function renderSankey(containerSelector = '#chart-sankey') {
         }
         return isLinkActive(d) ? ACTIVE_OPACITY : GHOST_OPACITY; // Apply filter ghosting
       })
+      .style('transition', 'opacity 0.3s ease')
+      .on('mouseover', function() {
+        d3.select(this).style('opacity', Math.min(1.0, parseFloat(d3.select(this).style('opacity')) + 0.2));
+      })
+      .on('mouseout', function(event, d) {
+        const baseOpacity = isHighlighting ? HIGHLIGHT_GHOST_OPACITY : (isLinkActive(d) ? ACTIVE_OPACITY : GHOST_OPACITY);
+        d3.select(this).style('opacity', baseOpacity);
+      })
       .append('title')
       .text(d => {
         const s = d.source && d.source.name ? d.source.name : (typeof d.source === 'number' ? (graph.nodes[d.source] && graph.nodes[d.source].name) : '');
@@ -233,13 +252,31 @@ function renderSankey(containerSelector = '#chart-sankey') {
       .attr('height', d => Math.max(1, d.y1 - d.y0))
       .attr('width', d => d.x1 - d.x0)
       .attr('fill', getNodeColor)
-      .attr('stroke', '#000')
+      .attr('stroke', '#374151')
+      .attr('stroke-width', 1)
+      .attr('rx', 2)
+      .attr('ry', 2)
       .style('opacity', d => {
         if (isHighlighting) {
              return HIGHLIGHT_GHOST_OPACITY; // If highlighted, base nodes are always dimmed
         }
         return isNodeActive(d) ? ACTIVE_OPACITY : GHOST_OPACITY; // Apply filter ghosting
-      }) 
+      })
+      .style('transition', 'all 0.3s ease')
+      .on('mouseover', function(event, d) {
+        if (d.type === 'Income') {
+          d3.select(this)
+            .attr('stroke-width', 2)
+            .attr('stroke', '#1f2937')
+            .style('filter', 'brightness(1.1)');
+        }
+      })
+      .on('mouseout', function() {
+        d3.select(this)
+          .attr('stroke-width', 1)
+          .attr('stroke', '#374151')
+          .style('filter', 'none');
+      })
       .append('title')
       .text(d => `${d.name}: ${d.value || d.value === 0 ? d.value : ''}`);
 
@@ -249,7 +286,10 @@ function renderSankey(containerSelector = '#chart-sankey') {
       .attr('dy', '0.35em')
       .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end')
       .text(d => d.name)
-      .style('font-size', '12px')
+      .style('font-family', "'Inter', sans-serif")
+      .style('font-size', '13px')
+      .style('font-weight', '600')
+      .style('fill', '#374151')
       .style('opacity', 1.0); // Text should always be legible (no ghosting)
       
     // --- 8. Highlighted Overlay ---

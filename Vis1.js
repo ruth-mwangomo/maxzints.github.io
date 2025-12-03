@@ -2,13 +2,9 @@
 
 // --- Global Constants and Dimensions ---
 const dimensions = {
-    width: 2000,
-    height: 600,
-    margin: { top: 25, right: 20, bottom: 30, left: 30 }
+    margin: { top: 50, right: 80, bottom: 40, left: 220 }
 }
-const width = dimensions.width - dimensions.margin.left - dimensions.margin.right;
-const height = dimensions.height - dimensions.margin.top - dimensions.margin.bottom;
-const radius = 1.25; // Radius of each mark
+const radius = 1.75; // Radius of each mark (increased for better visibility)
 const PARTY_OFFSET_AMOUNT = 0.25; 
 
 const questionColumns = [
@@ -17,6 +13,7 @@ const questionColumns = [
     { id: "SCIMPACT", label: "How has science impacted American society" }
 ];
 const Party_ID = "PARTY";
+const chartTitle = "How do Americans view social changes?";
 
 // --- Global State ---
 const processedCache = new Map();
@@ -239,8 +236,8 @@ function updateChart(rawData) {
     const colorScale = d3.scaleOrdinal().domain(partyDomains).range(partyColors);
 
     const rect = container.node().getBoundingClientRect();
-    const totalWidth = Math.max(300, Math.floor(rect.width));
-    const totalHeight = Math.max(200, Math.floor(rect.height));
+    const totalWidth = Math.floor(rect.width);
+    const totalHeight = Math.floor(rect.height);
     const chartWidth = Math.max(200, totalWidth - dimensions.margin.left - dimensions.margin.right);
     const chartHeight = Math.max(120, totalHeight - dimensions.margin.top - dimensions.margin.bottom);
     const yPaddingInner = 0.025; 
@@ -378,15 +375,30 @@ function updateChart(rawData) {
                 }
             }
 
+            // Add subtle shadow for depth
+            if (currentAlpha > 0.5) {
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 0.5;
+                ctx.shadowOffsetY = 0.5;
+            }
+            
             ctx.beginPath();
             ctx.arc(d.x, d.y, currentRadius, 0, Math.PI * 2);
             ctx.fillStyle = colorScale(d.partyName);
             ctx.globalAlpha = currentAlpha;
             ctx.fill();
 
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
             if (strokeColor) {
                 ctx.strokeStyle = strokeColor;
-                ctx.lineWidth = 0.5;
+                ctx.lineWidth = 1.5;
+                ctx.globalAlpha = 1;
                 ctx.stroke();
             }
         }
@@ -447,30 +459,103 @@ function updateChart(rawData) {
     // initial draw
     draw();
 
-    // --- Axis Drawing (Remains Unchanged) ---
+    // --- Axis Drawing with Improved Styling ---
     const svg = container.append("svg")
         .attr("width", totalWidth)
         .attr("height", totalHeight)
         .append("g")
         .attr("transform", `translate(${dimensions.margin.left}, ${dimensions.margin.top})`);
 
+    // Add chart title
+    svg.append("text")
+        .attr("x", chartWidth / 2)
+        .attr("y", -30)
+        .attr("class", "chart-title")
+        .style("font-family", "'Playfair Display', serif")
+        .style("font-size", "24px")
+        .style("font-weight", "700")
+        .style("fill", "#1f2937")
+        .style("text-anchor", "middle")
+        .style("letter-spacing", "0.5px")
+        .text(chartTitle);
+
     const xAxisGroup = svg.append("g")
         .attr("class", "x-axis")
         .attr("transform", `translate(0, ${chartHeight})`)
         .call(d3.axisTop(xScale).tickSize(chartHeight))
         .selectAll(".tick line")
-        .attr("stroke", "#ccc")
-        .attr("stroke-dasharray", "2,2");
+        .attr("stroke", "#e5e7eb")
+        .attr("stroke-dasharray", "3,3");
 
-    svg.append("g")
+    // Style x-axis text
+    svg.select(".x-axis").selectAll("text")
+        .style("font-family", "'Inter', sans-serif")
+        .style("font-size", "14px")
+        .style("font-weight", "600")
+        .style("fill", "#1f2937")
+        .attr("dy", "0.5em");
+
+    const yAxis = svg.append("g")
         .attr("class", "y-axis")
         .call(d3.axisLeft(yScale)
             .tickSize(-chartWidth) 
-            .tickFormat(d => {
-                const q = questionColumns.find(qc => qc.id === d);
-                return q ? q.label : d;
-            }));
+            .tickFormat(() => "")); // Remove default text labels
 
-    svg.select(".y-axis").selectAll("text").attr("x", 125); 
+    // Add wrapped text labels manually
+    yAxis.selectAll(".tick").each(function(d) {
+        const tick = d3.select(this);
+        const q = questionColumns.find(qc => qc.id === d);
+        if (!q) return;
+        
+        // Remove the default text element
+        tick.select("text").remove();
+        
+        // Word wrapping logic
+        const words = q.label.split(/\s+/);
+        const maxWidth = 230; // Maximum width in pixels
+        const lineHeight = 1.2; // ems
+        let lines = [];
+        let currentLine = [];
+        
+        // Create a temporary text element to measure
+        const tempText = tick.append("text")
+            .style("font-family", "'Inter', sans-serif")
+            .style("font-size", "11px")
+            .style("visibility", "hidden");
+        
+        words.forEach(word => {
+            currentLine.push(word);
+            tempText.text(currentLine.join(" "));
+            
+            if (tempText.node().getComputedTextLength() > maxWidth && currentLine.length > 1) {
+                currentLine.pop();
+                lines.push(currentLine.join(" "));
+                currentLine = [word];
+            }
+        });
+        lines.push(currentLine.join(" "));
+        tempText.remove();
+        
+        // Create the actual text element with multiple tspans
+        const text = tick.append("text")
+            .attr("x", -10)
+            .style("font-family", "'Inter', sans-serif")
+            .style("font-size", "11px")
+            .style("font-weight", "500")
+            .style("fill", "#374151")
+            .style("text-anchor", "end");
+        
+        lines.forEach((line, i) => {
+            text.append("tspan")
+                .attr("x", -10)
+                .attr("dy", i === 0 ? "0.35em" : lineHeight + "em")
+                .text(line);
+        });
+    });
+    
+    svg.select(".y-axis").selectAll("line")
+        .attr("stroke", "#e5e7eb")
+        .attr("stroke-dasharray", "3,3");
+    
     svg.selectAll(".domain").attr("stroke", "none");
 }
