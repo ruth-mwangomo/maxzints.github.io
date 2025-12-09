@@ -5,13 +5,16 @@
     <meta charset="utf-8">
     <title>Data Visualization Project Plot</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+        
         body {
             margin: 0;
             overflow-x: hidden;
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             height: 100vh;
             display: flex;
             flex-direction: column;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
         }
 
         /* Styling for the grid lines */
@@ -32,6 +35,15 @@
             margin: 0;
             width: 100%;
             height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow: visible;
+        }
+        
+        .chart-container canvas,
+        .chart-container svg {
+            overflow: visible;
         }
 
         /* New dashboard structure using flexbox for top/bottom split */
@@ -44,7 +56,7 @@
 
         /* Top half container (Vis1) */
         .dash-top {
-            flex: 2;
+            flex: 3;
             min-height: 0;
             padding: 10px;
             box-sizing: border-box;
@@ -52,32 +64,38 @@
 
         /* Bottom half container (Sankey and Circle) */
         .dash-bottom {
-            flex: 1;
+            flex: 2;
             display: flex;
             min-height: 0;
             padding: 10px;
+            padding-top: 5px;
             box-sizing: border-box;
         }
 
         /* Item within the bottom half (Sankey/Circle) */
         .chart-item {
             flex: 1;
-            margin: 0 20px;
+            margin: 0 10px;
             height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         /* Sankey Diagram (75% of bottom width) */
         #chart-sankey {
-            flex: 15 1 0%;
+            flex: 12 1 0%;
             margin-left: 0;
-            margin-right: 20px;
+            margin-right: 10px;
         }
 
         /* Circle Diagram (15% of bottom width) */
         #chart-circle {
             flex: 3 1 0%;
             margin-left: 0;
-            margin-right: 20px;
+            margin-right: 10px;
         }
 
         /* Global Legend (10% of bottom width) */
@@ -88,6 +106,9 @@
             box-sizing: border-box;
             margin-left: 0;
             margin-right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         /* Legend Specific Styles for better alignment (These make the colors visible) */
@@ -95,49 +116,140 @@
             display: flex;
             /* Aligns swatch and text horizontally */
             align-items: center;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            padding: 6px 8px;
+            border-radius: 6px;
+        }
+
+        .legend-item:hover {
+            background: #f8f9fa;
+            transform: translateX(3px);
         }
 
         .color-swatch {
-            width: 15px;
+            width: 16px;
             /* Size of the color square */
-            height: 15px;
-            margin-right: 8px;
+            height: 16px;
+            margin-right: 10px;
             /* Spacing between color and text */
-            border-radius: 3px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tooltip styles */
+        #tooltip {
+            position: absolute;
+            display: none;
+            background: rgba(17, 24, 39, 0.95);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            pointer-events: none;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Chart Title Styles */
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .chart-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Axis and Label Improvements */
+        .axis-label {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            fill: #374151;
+        }
+
+        .tick text {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            fill: #6b7280;
         }
     </style>
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 
 <body>
+    <div id="tooltip"></div>
     <div id="loading-overlay" style="position: fixed; 
             top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(255, 255, 255, 0.95); 
+            background: linear-gradient(135deg, rgba(245, 247, 250, 0.98), rgba(232, 236, 241, 0.98)); 
             z-index: 2000; 
             display: flex; 
             flex-direction: column; 
             justify-content: center; 
             align-items: center; 
-            font-family: Arial, sans-serif;">
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);">
 
-        <h2>Choose Visualization Start Mode</h2>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #1f2937; margin-bottom: 10px;">Choose Visualization Start Mode</h2>
 
-        <div style="margin: 20px 0;">
+        <div style="margin: 30px 0;">
             <button onclick="startVisualization(true)"
-                style="padding: 15px 30px; margin: 10px; font-size: 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer;">
+                style="padding: 16px 32px; 
+                       margin: 10px; 
+                       font-size: 16px; 
+                       font-weight: 600;
+                       font-family: 'Inter', sans-serif;
+                       background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                       color: white; 
+                       border: none; 
+                       border-radius: 10px;
+                       cursor: pointer;
+                       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                       transition: all 0.3s ease;
+                       transform: translateY(0);"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(16, 185, 129, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)';">
                 Fast, Pre-calculated Start (Recommended)
             </button>
             <button onclick="startVisualization(false)"
-                style="padding: 15px 30px; margin: 10px; font-size: 16px; background-color: #008CBA; color: white; border: none; cursor: pointer;">
+                style="padding: 16px 32px; 
+                       margin: 10px; 
+                       font-size: 16px; 
+                       font-weight: 600;
+                       font-family: 'Inter', sans-serif;
+                       background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+                       color: white; 
+                       border: none; 
+                       border-radius: 10px;
+                       cursor: pointer;
+                       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                       transition: all 0.3s ease;
+                       transform: translateY(0);"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(59, 130, 246, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)';">
                 Slow, Pure Force Directed Start
             </button>
         </div>
-        <p style="color: #666;">Choosing the Slow Start will re-run the D3 simulation, which may take several seconds.
+        <p style="color: #6b7280; font-size: 14px; font-weight: 500; max-width: 500px; text-align: center;">Choosing the Slow Start will re-run the D3 simulation, which may take several seconds.
         </p>
     </div>
-    <button onclick="snapshotCurrentPositions()"
+       <button onclick="snapshotCurrentPositions()"
         style="position: fixed; top: 10px; right: 10px; z-index: 1000; padding: 5px 10px;">
         Snapshot Positions
     </button>
@@ -222,8 +334,12 @@
             container.html(''); // Clear previous content
 
             container.append('div')
-                .style('font-weight', 'bold')
-                .style('margin-bottom', '10px')
+                .style('font-family', "'Playfair Display', serif")
+                .style('font-weight', '700')
+                .style('font-size', '18px')
+                .style('color', '#1f2937')
+                .style('margin-bottom', '16px')
+                .style('letter-spacing', '0.3px')
                 .text('Party Affiliation');
 
             const legendItems = container.selectAll(".legend-item")
