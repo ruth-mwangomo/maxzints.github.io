@@ -1,85 +1,396 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Data Visualization Project Plot</title>
     <style>
-        body { 
-            margin: 0; 
-            overflow-x: hidden; 
-            font-family: Arial, sans-serif;
-        } 
-        /* Styling for the grid lines */
-        .x-axis line, .y-axis line {
-            stroke: #ccc;
-            stroke-dasharray: 2,2;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+        
+        body {
+            margin: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
         }
-        .x-axis .domain, .y-axis .domain {
+
+        /* Styling for the grid lines */
+        .x-axis line,
+        .y-axis line {
+            stroke: #ccc;
+            stroke-dasharray: 2, 2;
+        }
+
+        .x-axis .domain,
+        .y-axis .domain {
             stroke: none;
         }
+
         /* Container styles */
         .chart-container {
             position: relative;
-            margin: 20px;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow: visible;
         }
-        .buttons-container {
-            margin-bottom: 20px;
-            text-align: center;
+        
+        .chart-container canvas,
+        .chart-container svg {
+            overflow: visible;
         }
-        /* Button styles */
-        .buttons-container button {
-            padding: 10px 15px;
-            margin: 0 5px;
-            border: 1px solid #ccc;
-            background-color: #f0f0f0;
-            cursor: pointer;
+
+        /* New dashboard structure using flexbox for top/bottom split */
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Top half container (Vis1) */
+        .dash-top {
+            flex: 3;
+            min-height: 0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* Bottom half container (Sankey and Circle) */
+        .dash-bottom {
+            flex: 2;
+            display: flex;
+            min-height: 0;
+            padding: 10px;
+            padding-top: 5px;
+            box-sizing: border-box;
+        }
+
+        /* Item within the bottom half (Sankey/Circle) */
+        .chart-item {
+            flex: 1;
+            margin: 0 10px;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* Sankey Diagram (75% of bottom width) */
+        #chart-sankey {
+            flex: 12 1 0%;
+            margin-left: 0;
+            margin-right: 10px;
+        }
+
+        /* Circle Diagram (15% of bottom width) */
+        #chart-circle {
+            flex: 3 1 0%;
+            margin-left: 0;
+            margin-right: 10px;
+        }
+
+        /* Global Legend (10% of bottom width) */
+        #global-legend {
+            flex: 2 1 0%;
+            height: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-left: 0;
+            margin-right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Legend Specific Styles for better alignment (These make the colors visible) */
+        .legend-item {
+            display: flex;
+            /* Aligns swatch and text horizontally */
+            align-items: center;
+            margin-bottom: 10px;
             font-size: 14px;
-            border-radius: 5px;
-            transition: background-color 0.2s ease, border-color 0.2s ease;
-        }
-        .buttons-container button:hover {
-            background-color: #e0e0e0;
-            border-color: #aaa;
-        }
-        .buttons-container button.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        /* Nav buttons linking to standalone visuals */
-        .nav-buttons {
-            text-align: center;
-            margin: 14px 0;
-        }
-        .nav-buttons .nav-button {
-            display: inline-block;
-            padding: 8px 12px;
-            margin: 0 6px;
-            background: #28a745;
-            color: #fff;
-            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            padding: 6px 8px;
             border-radius: 6px;
+        }
+
+        .legend-item:hover {
+            background: #f8f9fa;
+            transform: translateX(3px);
+        }
+
+        .color-swatch {
+            width: 16px;
+            /* Size of the color square */
+            height: 16px;
+            margin-right: 10px;
+            /* Spacing between color and text */
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tooltip styles */
+        #tooltip {
+            position: absolute;
+            display: none;
+            background: rgba(17, 24, 39, 0.95);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            pointer-events: none;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(4px);
+        }
+
+        /* Chart Title Styles */
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .chart-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #6b7280;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* Axis and Label Improvements */
+        .axis-label {
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
-            border: 1px solid #208038;
+            font-size: 13px;
+            fill: #374151;
         }
-        .nav-buttons .nav-button.sankey {
-            background: #17a2b8;
-            border-color: #12808a;
-        }
-        .nav-buttons .nav-button:hover {
-            opacity: 0.9;
+
+        .tick text {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            fill: #6b7280;
         }
     </style>
-    <script src="https://d3js.org/d3.v7.min.js"></script> 
+    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
+
 <body>
-    <div class="nav-buttons">
-        <a class="nav-button" href="circle.html">Circle</a>
-        <a class="nav-button sankey" href="sankey.html">Sankey</a>
+    <div id="tooltip"></div>
+    <div id="loading-overlay" style="position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: linear-gradient(135deg, rgba(245, 247, 250, 0.98), rgba(232, 236, 241, 0.98)); 
+            z-index: 2000; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(10px);">
+
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #1f2937; margin-bottom: 10px;">Choose Visualization Start Mode</h2>
+
+        <div style="margin: 30px 0;">
+            <button onclick="startVisualization(true)"
+                style="padding: 16px 32px; 
+                       margin: 10px; 
+                       font-size: 16px; 
+                       font-weight: 600;
+                       font-family: 'Inter', sans-serif;
+                       background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                       color: white; 
+                       border: none; 
+                       border-radius: 10px;
+                       cursor: pointer;
+                       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                       transition: all 0.3s ease;
+                       transform: translateY(0);"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(16, 185, 129, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)';">
+                Fast, Pre-calculated Start (Recommended)
+            </button>
+            <button onclick="startVisualization(false)"
+                style="padding: 16px 32px; 
+                       margin: 10px; 
+                       font-size: 16px; 
+                       font-weight: 600;
+                       font-family: 'Inter', sans-serif;
+                       background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+                       color: white; 
+                       border: none; 
+                       border-radius: 10px;
+                       cursor: pointer;
+                       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                       transition: all 0.3s ease;
+                       transform: translateY(0);"
+                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(59, 130, 246, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.3)';">
+                Slow, Pure Force Directed Start
+            </button>
+        </div>
+        <p style="color: #6b7280; font-size: 14px; font-weight: 500; max-width: 500px; text-align: center;">Choosing the Slow Start will re-run the D3 simulation, which may take several seconds.
+        </p>
     </div>
-    <div class="buttons-container"></div>
-    <div class="chart-container"></div>
+       <button onclick="snapshotCurrentPositions()"
+        style="position: fixed; top: 10px; right: 10px; z-index: 1000; padding: 5px 10px;">
+        Snapshot Positions
+    </button>
+    <div class="dashboard">
+        <div class="dash-top">
+            <div id="chart-vis1" class="chart-container"></div>
+        </div>
+        <div class="dash-bottom">
+            <div id="chart-sankey" class="chart-item">
+                <div id="sankey-error"></div>
+            </div>
+            <div id="chart-circle" class="chart-item"></div>
+            <div id="global-legend"></div>
+        </div>
+    </div>
 
     <script src="Vis1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+    <script src="sankey.js"></script>
+    <script src="circle.js"></script>
+
+    <script>
+        window.usePrecalculatedPositions = true;
+        // --- Utility Functions (Must be global for all charts) ---
+        function mapEdu(code) {
+            switch (+code) {
+                case 1: return 'High School <';
+                case 2: return 'Associates <';
+                case 3: return 'Bachelor';
+                case 4: return 'Masters +';
+                default: return 'Unknown';
+            }
+        }
+        function mapInc(code) {
+            switch (+code) {
+                case 1:
+                case 2:
+                case 3: return '<$50k';
+                case 4:
+                case 5: return '$50k - $100k';
+                case 6:
+                case 7: return '$100k - $150k';
+                case 8: return '$>150k'; // Corrected Label to match global list
+                default: return null;
+            }
+        }
+
+        // --- Global State to track active filters (initially all) ---
+        const allParties = ["Democrat", "Republican", "Independent", "Other"];
+        window.activeParties = new Set(allParties);
+        const allIncomes = ['<$50k', '$50k - $100k', '$100k - $150k', '$>150k'];
+        window.activeIncomes = new Set(allIncomes);
+
+        const allEdus = ['High School <', 'Associates <', 'Bachelor', 'Masters +', 'Unknown'];
+        window.activeEdus = new Set(allEdus);
+
+        window.highlightedID = null;
+
+        // --- Universal Update Function for all Charts ---
+        function updateAllCharts() {
+            // Re-render each chart, applying the current global filters
+            try {
+                if (window.rlsData) {
+                    // This function is in Vis1.js and recalculates points based on all global filters
+                    updateChart(window.rlsData);
+                }
+            } catch (e) { console.error('Failed to update Vis1', e); }
+
+            // Re-run Sankey and Circle render functions, which check global filters internally
+            try { renderSankey('#chart-sankey'); } catch (e) { console.error('Failed to render sankey', e); }
+            try { renderCircle('#chart-circle'); } catch (e) { console.error('Failed to render circle', e); }
+        }
+
+        // --- Legend Renderer with Interactivity (Party filter only) ---
+        function renderGlobalLegend(containerSelector = '#global-legend') {
+            const container = d3.select(containerSelector);
+            if (container.empty()) return;
+
+            const partyDomains = ["Democrat", "Republican", "Independent", "Other"];
+            const partyColors = ["#76b7b2ff", "#e15759", "#f28e2c", "#59a14f"];
+
+            container.html(''); // Clear previous content
+
+            container.append('div')
+                .style('font-family', "'Playfair Display', serif")
+                .style('font-weight', '700')
+                .style('font-size', '18px')
+                .style('color', '#1f2937')
+                .style('margin-bottom', '16px')
+                .style('letter-spacing', '0.3px')
+                .text('Party Affiliation');
+
+            const legendItems = container.selectAll(".legend-item")
+                .data(partyDomains)
+                .enter()
+                .append("div")
+                .attr("class", "legend-item")
+                // --- Add the Click Handler to each legend item ---
+                .on("click", function (event, d) {
+                    if (window.activeParties.has(d)) {
+                        window.activeParties.delete(d);
+                    } else {
+                        window.activeParties.add(d);
+                    }
+
+                    // Re-add all if all are deselected (optional: keep at least one selected)
+                    if (window.activeParties.size === 0) {
+                        window.activeParties = new Set(allParties);
+                    }
+
+                    // Update the visual state of the legend
+                    d3.select(this)
+                        .style("opacity", window.activeParties.has(d) ? 1 : 0.5);
+
+                    // Un-highlight any specific respondent
+                    window.highlightedID = null;
+
+                    updateAllCharts();
+                })
+                .style("cursor", "pointer"); // Indicate it's clickable
+
+            // Add the color swatch
+            legendItems.append("div")
+                .attr("class", "color-swatch")
+                .style("background-color", (d, i) => partyColors[i]);
+
+            // Add the text label
+            legendItems.append("span")
+                .text(d => d);
+
+            // Initial styling based on the active state
+            legendItems.style("opacity", d => window.activeParties.has(d) ? 1 : 0.5);
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGlobalLegend('#global-legend');
+            // Vis1.js loads data and calls updateAllCharts() when ready.
+        });
+
+    </script>
 </body>
+
 </html>
