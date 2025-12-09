@@ -2,7 +2,7 @@
 
 // --- Global Constants and Dimensions ---
 const dimensions = {
-    margin: { top: 50, right: 80, bottom: 40, left: 220 }
+    margin: { top: 50, right: 80, bottom: 10, left: 220 }
 }
 const radius = 1.5; // Radius of each mark (increased for better visibility)
 const PARTY_OFFSET_AMOUNT = 0.25; 
@@ -10,10 +10,10 @@ const PARTY_OFFSET_AMOUNT = 0.25;
 const questionColumns = [
     { id: "CHNG_B", label: "More women in the workforce" },
     { id: "CHNG_A", label: "A growing population of immigrants" },
-    { id: "SCIMPACT", label: "How has science impacted American society" }
+    { id: "SCIMPACT", label: "Science's impact on American society" }
 ];
 const Party_ID = "PARTY";
-const chartTitle = "How do Americans view social changes?";
+const chartTitle = "How do Americans view societal changes?";
 
 // --- Global State ---
 const processedCache = new Map();
@@ -238,8 +238,8 @@ function updateChart(rawData) {
     const rect = container.node().getBoundingClientRect();
     const totalWidth = Math.floor(rect.width);
     const totalHeight = Math.floor(rect.height);
-    const chartWidth = Math.max(200, totalWidth - dimensions.margin.left - dimensions.margin.right);
-    const chartHeight = Math.max(120, totalHeight - dimensions.margin.top - dimensions.margin.bottom);
+    const chartWidth = (totalWidth - dimensions.margin.left - dimensions.margin.right);
+    const chartHeight = (totalHeight - dimensions.margin.top - dimensions.margin.bottom);
     const yPaddingInner = 0.025; 
     const xPadding = yPaddingInner / 4; 
 
@@ -493,7 +493,7 @@ function updateChart(rawData) {
         .style("font-size", "14px")
         .style("font-weight", "600")
         .style("fill", "#1f2937")
-        .attr("dy", "0.5em");
+        .attr("dy", "-0.5em");
 
     const yAxis = svg.append("g")
         .attr("class", "y-axis")
