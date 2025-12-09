@@ -15,7 +15,9 @@ function renderCircle(containerSelector = '#chart-circle') {
     .attr('width', width)
     .attr('height', width)
     .append('g')
-    .attr('transform', `translate(${width / 2},${width / 2})`);
+    .attr('transform', `translate(${width / 2},${width / 2})`)
+    //.style('display', 'block')       // Makes margin: auto work
+    //.style('margin', '0 auto');      // Centers the SVG horizontally
   const tooltip = d3.select('#tooltip');
 
   function mapParty(code) { switch (+code) { case 1: return 'Republican'; case 2: return 'Democrat'; case 3: return 'Independent'; default: return 'Other'; } }

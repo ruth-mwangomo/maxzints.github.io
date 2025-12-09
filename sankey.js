@@ -9,8 +9,8 @@ function renderSankey(containerSelector = '#chart-sankey') {
   container.html('');
   const rect = container.node().getBoundingClientRect();
   // Use 95% of the container width/height for the inner SVG, allowing for margins
-  const width = Math.max(500, rect.width * 0.95);
-  const height = Math.max(300, rect.height * 0.95);
+  const width = (rect.width * 0.95);
+  const height = (rect.height * 0.875);
 
   // Add title to container
   container.append('div')
@@ -23,8 +23,14 @@ function renderSankey(containerSelector = '#chart-sankey') {
     .style('margin-bottom', '10px')
     .style('letter-spacing', '0.3px')
     .text('Party Affiliation → Income Distribution');
-  
-  const svg = container.append('svg').attr('width', width).attr('height', height);
+
+  const svg = container.append('svg')
+    .attr('width', width)
+    .attr('height', height)
+    .style('display', 'block')       // Makes margin: auto work
+    .style('margin', '0 auto');      // Centers the SVG horizontally
+
+  //const svg = container.append('svg').attr('width', width).attr('height', height);
 
   // Centralized Utilities Reference 
   function mapParty(code) { switch (+code) { case 1: return 'Republican'; case 2: return 'Democrat'; case 3: return 'Independent'; default: return 'Other'; } }
